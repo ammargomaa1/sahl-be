@@ -17,6 +17,17 @@ class CreateCategory extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            'slug' => Str::slug($this->input('name_ar')),
+        ]);
+
+        if ($this->input('parent_id') == 'null') {
+            $this->request->remove('parent_id');
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -24,18 +35,16 @@ class CreateCategory extends FormRequest
      */
     public function rules(): array
     {
-        $this->merge([
-            'slug' => Str::slug(request('name_ar'))
-        ]);
         
         return [
             'name_ar' => 'required',
             'name_en' => 'required',
-            'parent_id' => [Rule::exists('categories', 'id')->where(function ($builder) {
+            'parent_id' => ['nullable',Rule::exists('categories', 'id')->where(function ($builder) {
                 $builder->whereNull('parent_id');
             })],
             'image' => 'required|image|mimes:jpeg,jpg,png|max:5120',
-            'slug' => 'unique:categories,slug'
+            'slug' => 'unique:categories,slug',
+            'is_main_page_menu' => 'required|boolean'
         ];
     }
 }

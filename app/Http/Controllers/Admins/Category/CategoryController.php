@@ -19,9 +19,9 @@ class CategoryController extends Controller
     {
 
         if ($request->parents_only) {
-            $categories = Category::whereNull('parent_id')->ordered()->paginate($request->per_page ?? 10);
+            $categories = Category::whereNull('parent_id')->where('is_main_page_menu' , true)->ordered()->paginate($request->per_page ?? 10);
         } else {
-            $categories = Category::with('parent', 'children', 'images')->ordered()->paginate($request->per_page ?? 10);
+            $categories = Category::with('parent', 'children', 'images')->where('is_main_page_menu' , true)->ordered()->paginate($request->per_page ?? 10);
         }
         return CategoryResource::collection(
             $categories
@@ -45,6 +45,7 @@ class CategoryController extends Controller
         $creationArray = [
             'name_ar' => $request->name_ar,
             'name_en' => $request->name_en,
+            'is_main_page_menu' => $request->is_main_page_menu,
             'slug' => Str::slug($request->name_ar, '-'),
         ];
 
@@ -57,6 +58,10 @@ class CategoryController extends Controller
         $category = Category::create(
             $creationArray
         );
+
+        if (!$category) {
+            throw new \Exception('Category were not created with body ' . json_encode($creationArray));
+        }
 
         $path = $request->file('image')->store('public/categories/' . $category->id);
 
@@ -77,7 +82,8 @@ class CategoryController extends Controller
                 'name_ar',
                 'name_en',
                 'parent_id',
-                'slug'
+                'slug',
+                'is_main_page_menu'
             ]));
 
             return (new CategoryResource(

@@ -12,6 +12,7 @@ use App\Http\Controllers\Users\Addresses\AddressDataController;
 use App\Http\Controllers\Users\Products\ProductController;
 use App\Http\Controllers\Users\Auth\LoginController;
 use App\Http\Controllers\Users\Auth\MeController;
+use App\Http\Controllers\Users\Auth\PasswordResetController;
 use App\Http\Controllers\Users\Auth\RegisterController;
 use App\Http\Controllers\Users\Carts\CartController;
 use App\Http\Controllers\Users\Categories\CategoryController;
@@ -45,6 +46,8 @@ Route::group(['prefix' => 'auth'], function () {
         Route::post('/email/send-verify', [RegisterController::class, 'sendVerificationEmail']);
     });
     Route::get('/email/verify/{id}/{hash}', [RegisterController::class, 'verifyMail'])->middleware(['signed'])->name('api.verification.verify');
+    Route::post('/password/reset-request', [PasswordResetController::class, 'sendResetLinkEmail']);
+    Route::post('/password/reset', [PasswordResetController::class, 'resetPassword'])->name('password.reset');
 });
 
 Route::get('categories', [CategoryController::class, 'index']);

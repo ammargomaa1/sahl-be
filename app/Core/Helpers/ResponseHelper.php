@@ -16,7 +16,7 @@ class ResponseHelper
             $result['meta'] = $params['meta'];
         }
         $result['meta']['code'] = 200;
-        $result['message'] = !empty($params['message']) ? trans($params['message'],[],request()->header('locale','en')) : 'success';
+        $result['message'] = !empty($params['message']) ? $params['message'] : 'success';
 
         return $result;
     }

@@ -20,6 +20,8 @@ class EventServiceProvider extends ServiceProvider
         ],
         'App\Events\Order\OrderCreated' => [
             'App\Listeners\Order\EmptyCart',
+            'App\Listeners\Order\InformUserWithOrderDetails',
+            'App\Listeners\Order\NotifyAdminsWithNewOrderDetails'
         ]
     ];
 

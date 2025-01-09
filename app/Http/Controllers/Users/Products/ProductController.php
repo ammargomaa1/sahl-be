@@ -8,6 +8,8 @@ use App\Http\Resources\ProductsIndexResource;
 use App\Models\Product;
 use App\Scoping\Scopes\CategoryScope;
 use App\Scoping\Scopes\NameScope;
+use App\Scoping\Scopes\PriceMaxScope;
+use App\Scoping\Scopes\PriceMinScope;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -35,7 +37,9 @@ class ProductController extends Controller
     {
         return [
             'category' => new CategoryScope(),
-            'search' => new NameScope()
+            'search' => new NameScope(),
+            'min_price' => new PriceMinScope(),
+            'max_price' => new PriceMaxScope(),
         ];
     }
 }

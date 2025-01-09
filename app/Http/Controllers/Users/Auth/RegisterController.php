@@ -74,7 +74,7 @@ class RegisterController extends Controller
 
             if ($request->user()->hasVerifiedEmail()) {
                 return ResponseHelper::renderCustomSuccessResponse([
-                    'message' => 'ALL.USER_ALREADY_VERIFIED'
+                    'message' => __('ALL.USER_ALREADY_VERIFIED')
                 ]);
             }
 

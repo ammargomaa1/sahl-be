@@ -15,6 +15,13 @@ class UpdateCategoryRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation()
+    {
+        if ($this->input('parent_id') == 'null') {
+            $this->request->remove('parent_id');
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -25,7 +32,7 @@ class UpdateCategoryRequest extends FormRequest
         return [
             'name_ar' => 'string',
             'name_en' => 'string',
-            'parent_id' => [Rule::exists('categories', 'id')->where(function ($builder) {
+            'parent_id' => ['nullable', Rule::exists('categories', 'id')->where(function ($builder) {
                 $builder->whereNull('parent_id');
             }), 'nullable'],
             'slug' => 'unique:categories,slug'

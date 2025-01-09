@@ -17,7 +17,8 @@ class Category extends Model
         'name_en',
         'order',
         'slug',
-        'parent_id'
+        'parent_id',
+        'is_main_page_menu',
     ];
 
     public function children(){
