@@ -13,6 +13,7 @@ use App\Http\Requests\Users\Orders\OrderStoreRequest;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Payment\MoyasarPayment;
+use App\Payment\PaymobService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -49,17 +50,18 @@ class OrderController extends Controller
 
             $order->products()->sync($cart->products()->forSyncing());
 
-            event(new OrderCreated($order));
-            $payment = $this->Pay($request, $order);
-            $order->payment_id = $payment['payment_id'];
-
+            $payment = $this->Pay($order);
+            $order->payment_id = $payment['payment_order_id'];
+            
             $order->save();
-
+            
             DB::commit();
-
+            
+            event(new OrderCreated($order));
             $order->redirect_url = $payment['redirect_url'];
             return new OrderResource($order);
         } catch (BusinessException $ex) {
+            DB::rollBack();
             return ResponseHelper::renderCustomErrorResponse([
                 'message' => $ex->getMessage(),
                 'code' => $ex->getStatusCode(),
@@ -152,24 +154,9 @@ class OrderController extends Controller
         );
     }
 
-    protected function Pay(Request $request, Order $order)
+    protected function Pay(Order $order)
     {
-        $paymentMethod = new MoyasarPayment;
-        $paymentMethod->setOrder($order)
-            ->setCreditCardNumber($request->credit_card_number)
-            ->setCreditCardName($request->credit_card_name)
-            ->setCvC($request->cvc)
-            ->setMonth($request->month)
-            ->setYear($request->year);
-
-        $result = $paymentMethod->pay();
-        info($result);
-        if ($result['status'] === 400) {
-            throw new BusinessException(400, 'payment failed, ' . implode(' ,', $result['body']['errors']['company'] ? $result['body']['errors']['company'] : $result['body']['errors']));
-        } elseif (!in_array($result['status'], [200, 201])) {
-            throw new BusinessException($result['status'], 'payment failed');
-        }
-
-        return ['payment_id' => $result['body']['id'], 'redirect_url' => $result['body']['source']['transaction_url']];
+        $paymentMethod = new PaymobService($order);
+        return $paymentMethod->createIntention();
     }
 }
