@@ -22,7 +22,8 @@ class CategoryResource extends JsonResource
             'parent_id' => $this->parent_id,
             'children' => CategoryResource::collection($this->whenLoaded('children')),
             'image' => $this->images()?->first(),
-            'parent_category' => (new CategoryResource($this->whenLoaded('parent')))
+            'parent_category' => (new CategoryResource($this->whenLoaded('parent'))),
+            'is_main_page_menu' => $this->is_main_page_menu
         ];
     }
 }
