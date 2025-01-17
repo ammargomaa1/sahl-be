@@ -42,7 +42,7 @@ class StoreProductRequest extends FormRequest
             'variations.*.name_ar' => 'required|string',
             'variations.*.name_en' => 'required|string',
             'variations.*.price' => 'required|integer|min:100',
-            'variations.*.stock_count' => 'required|integer|min:100',
+            'variations.*.stock_count' => 'required|integer|min:1',
             'variations.*.images' => 'required|array',
             'variations.*.images.*' => ['required', new ValidateBase64Image()],
         ];
