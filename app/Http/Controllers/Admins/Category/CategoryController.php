@@ -19,9 +19,9 @@ class CategoryController extends Controller
     {
 
         if ($request->parents_only) {
-            $categories = Category::whereNull('parent_id')->where('is_main_page_menu' , true)->ordered()->paginate($request->per_page ?? 10);
+            $categories = Category::whereNull('parent_id')->ordered()->paginate($request->per_page ?? 10);
         } else {
-            $categories = Category::with('parent', 'children', 'images')->where('is_main_page_menu' , true)->ordered()->paginate($request->per_page ?? 10);
+            $categories = Category::with('parent', 'children', 'images')->ordered()->paginate($request->per_page ?? 10);
         }
         return CategoryResource::collection(
             $categories
