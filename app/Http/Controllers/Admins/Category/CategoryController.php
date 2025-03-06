@@ -11,6 +11,7 @@ use App\Models\Category;
 use App\Models\CategoryImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CategoryController extends Controller
@@ -19,9 +20,9 @@ class CategoryController extends Controller
     {
 
         if ($request->parents_only) {
-            $categories = Category::whereNull('parent_id')->ordered()->paginate($request->per_page ?? 10);
+            $categories = Category::whereNull('parent_id')->orderBy('categories.id','desc')->paginate($request->per_page ?? 10);
         } else {
-            $categories = Category::with('parent', 'children', 'images')->ordered()->paginate($request->per_page ?? 10);
+            $categories = Category::with('parent', 'children', 'images')->orderBy('categories.id','desc')->paginate($request->per_page ?? 10);
         }
         return CategoryResource::collection(
             $categories
@@ -67,7 +68,7 @@ class CategoryController extends Controller
 
         CategoryImage::create([
             'category_id' => $category->id,
-            'image_path' => '/'.$path
+            'image_path' => '/' . $path
         ]);
 
         DB::commit();
@@ -78,18 +79,43 @@ class CategoryController extends Controller
     public function update(Category $category, UpdateCategoryRequest $request)
     {
         try {
-            $category->update($request->only([
-                'name_ar',
-                'name_en',
-                'parent_id',
-                'slug',
-                'is_main_page_menu'
-            ]));
+            DB::beginTransaction();
 
-            return (new CategoryResource(
-                $category->refresh()
-            ));
+            $updateArray = [
+                'name_ar' => $request->name_ar,
+                'name_en' => $request->name_en,
+                'is_main_page_menu' => $request->is_main_page_menu,
+                'slug' => Str::slug($request->name_ar, '-')
+            ];
+
+            if ($request->parent_id) {
+                $updateArray['parent_id'] = $request->parent_id;
+            }
+
+            $category->update($updateArray);
+
+            if ($request->hasFile('image')) {
+                // Delete the old image if exists
+                $oldImages = $category->images;
+                foreach ($oldImages as $oldImage) {
+                    Storage::delete(str_replace('/public/', 'public/', $oldImage->image_path));
+                    $oldImage->delete();
+                }
+
+                // Store the new image
+                $path = $request->file('image')->store('public/categories/' . $category->id);
+
+                CategoryImage::create([
+                    'category_id' => $category->id,
+                    'image_path' => '/' . $path
+                ]);
+            }
+
+            DB::commit();
+
+            return new CategoryResource($category->refresh());
         } catch (\Exception $ex) {
+            DB::rollBack();
             return ResponseHelper::render500Response($ex);
         }
     }
@@ -97,16 +123,35 @@ class CategoryController extends Controller
     public function destroy(Category $category)
     {
         try {
+            DB::beginTransaction();
 
-            // $images = $category->images;
+            // Delete associated images if they exist
 
-            // foreach ($images as $image) {
-            //     \Storage::delete($image->image_path);
-            // }
+            // Delete the old image if exists
+            $oldImages = $category->images;
+            foreach ($oldImages as $oldImage) {
+                Storage::delete(str_replace('/public/', 'public/', $oldImage->image_path));
+                $oldImage->delete();
+            }
 
+
+            // Detach products associated with the category
+            $category->products()->detach();
+
+            // Recursively delete child categories
+            $children = $category->children;
+            foreach ($children as $child) {
+                $this->destroy($child);
+            }
+
+            // Delete the category
+            $category->delete();
+
+            DB::commit();
 
             return ResponseHelper::renderCustomSuccessResponse([]);
         } catch (\Exception $ex) {
+            DB::rollBack();
             return ResponseHelper::render500Response($ex);
         }
     }

@@ -19,7 +19,7 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $products = Product::with('variations.stock', 'variations.productVariationImages', 'categories')->withScopes($this->scopes())->paginate($request->per_page ?? 10);
+        $products = Product::with('variations.stock', 'variations.productVariationImages', 'categories')->orderBy('products.id', 'desc')->withScopes($this->scopes())->paginate($request->per_page ?? 10);
         return ProductsIndexResource::collection($products);
     }
 

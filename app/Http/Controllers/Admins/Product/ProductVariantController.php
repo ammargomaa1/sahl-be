@@ -29,19 +29,56 @@ class ProductVariantController extends Controller
     {
         try {
             DB::beginTransaction();
+
+            // Update basic fields
             $productVariant->update($request->only([
                 'name_ar',
                 'name_en',
                 'price',
             ]));
+            
+            $oldImagesCollectedIds = [];
+
+            if ($request->old_images) {
+                $oldImagesCollectedIds = collect($request->old_images)->pluck('id')->toArray();
+
+            }
+            
+            // Delete existing images (optional: you can also delete files from storage if needed)
+            foreach ($productVariant->productVariationImages as $image) {
+                if (in_array($image->id, $oldImagesCollectedIds)) {
+                    continue;
+                }
+
+                \Storage::delete($image->image_path); // Delete the file from storage
+                $image->delete();                     // Delete the image record from DB
+            }
+
+            // Save new images
+            if ($request->images) {
+                foreach ($request->images as $key => $imageString) {
+                    $imageName = $this->saveImage(
+                        $key,
+                        $imageString,
+                        $productVariant->product_id,
+                        $productVariant->id
+                    );
+
+                    $productVariant->productVariationImages()->create([
+                        'image_path' => $imageName,
+                    ]);
+                }
+            }
+
 
             DB::commit();
-            return (new ProductVariationsResource($productVariant));
+            return new ProductVariationsResource($productVariant->fresh('productVariationImages'));
         } catch (\Exception $ex) {
             DB::rollBack();
             return ResponseHelper::render500Response($ex);
         }
     }
+
 
     public function create($productId, CreateProductVariantRequest $request)
     {
@@ -138,7 +175,8 @@ class ProductVariantController extends Controller
         }
     }
 
-    public function updateVariantStock(ProductVariation $productVariant, UpdateVariantQuantity $request){
+    public function updateVariantStock(ProductVariation $productVariant, UpdateVariantQuantity $request)
+    {
         try {
 
             $productVariant->stocks()->create([
@@ -146,8 +184,6 @@ class ProductVariantController extends Controller
             ]);
 
             return (new ProductVariationsResource($productVariant));
-
-            
         } catch (\Exception $ex) {
             return ResponseHelper::render500Response($ex);
         }
@@ -160,8 +196,7 @@ class ProductVariantController extends Controller
         $imageInfo = getimagesizefromstring($imageData);
         $mime = explode('/', $imageInfo['mime'])[1];
         $imageName = $order . '.' . $mime;
-        $directory = '/public/products/' . $productId . '/' . $variationId;
-
+        $directory = '/public/products/' . $productId . '/' . $variationId . '/';
         \Storage::put($directory . $imageName, ($imageData));
 
         return $directory . $imageName;
