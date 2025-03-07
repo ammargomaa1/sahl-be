@@ -13,17 +13,15 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         Admin::create([
-            'name' => 'Eyad Sheta',
-            'email' => 'eyad_sheta@gmail.com',
-            'password' => 'JAR2w2oVk3punEm',
-        ],[
-            'name' => 'Khaled Dev',
-            'email' => 'khaledDev@gmail.com',
-            'password' => 'JAR2w2oVk3punEmPPOOQQ',
-        ],[
-            'name' => 'Ammar Dev',
-            'email' => 'AmmarDev@gmail.com',
-            'password' => 'JAR2w2oVk3punEmRRPPOOQQ',
+            'name' => 'Sahl Admin',
+            'email' => 'info.sahlonline@gmail.com',
+            'password' => 'Sahl12345',
+        ]);
+
+        Admin::create([
+            'name' => 'Ammar Gomaa Dev',
+            'email' => 'ammargomaa1@gmail.com',
+            'password' => 'AmmarGomaa97',
         ]);
     }
 }
