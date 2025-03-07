@@ -77,6 +77,7 @@ Route::group(['prefix' => 'management'], function () {
 
     Route::group(['middleware' => 'auth:admins'], function () {
         Route::apiResource('categories', AdminCategoryController::class);
+        Route::post('categories/{category}', [AdminCategoryController::class, 'update']);
         Route::apiResource('products', AdminProductController::class);
         Route::apiResource('product-variants', ProductVariantController::class);
         Route::apiResource('orders', AdminOrderController::class);
